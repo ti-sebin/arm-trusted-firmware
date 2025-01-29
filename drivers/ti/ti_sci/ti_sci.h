@@ -275,4 +275,16 @@ int ti_sci_lpm_get_next_sys_mode(uint8_t *next_mode);
  */
 int ti_sci_boot_notification(void);
 
+/**
+ * - ti_sci_prepare_sleep - Command to initiate system transition into suspend.
+ *		@proc_id: Processor ID.
+ *		@mode: Low power mode to enter.
+ *		@context_save_addr: Address that TIFS can save its context.
+ *
+ * NOTE: for all these functions, the following are generic in nature:
+ * Returns 0 for successful request, else returns corresponding error message.
+ */
+int ti_sci_prepare_sleep(uint8_t mode, uint64_t context_save_addr,
+			 uint32_t debug_flags);
+
 #endif /* TI_SCI_H */
