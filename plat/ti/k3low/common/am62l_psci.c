@@ -10,13 +10,18 @@
 #include <arch_helpers.h>
 #include <common/debug.h>
 #include <drivers/delay_timer.h>
+#include <gtc.h>
+#include <k3_console.h>
 #include <ti_devices.h>
 #include <ti_device_handler.h>
 #include <k3_gicv3.h>
 #include <lib/el3_runtime/cpu_data.h>
 #include <lib/mmio.h>
 #include <lib/psci/psci.h>
+#include <lpm_stub.h>
+#include <plat_scmi_def.h>
 #include <plat/common/platform.h>
+#include <rtc.h>
 #include <ti_sci.h>
 #include <ti_sci_protocol.h>
 
@@ -243,11 +248,68 @@ static void am62l_system_reset(void)
 	ERROR("%s: Failed to reset device\n", __func__);
 }
 
+static void am62l_pwr_domain_suspend(const psci_power_state_t *target_state)
+{
+	unsigned int core, proc_id;
+	uint64_t  context_save_addr = 0x80A00000;
+	/* TODO: Pass the mode passed from kernel using s2idle
+	 * For now make mode=6 for RTC only + DDR and mdoe=0 for deepsleep
+	 */
+	uint32_t mode = 0;
+
+	core = plat_my_core_pos();
+	proc_id = PLAT_PROC_START_ID + core;
+
+	/* Prevent interrupts from spuriously waking up this cpu */
+	k3_gic_cpuif_disable();
+	k3_gic_save_context();
+
+	if ((mode == 0) || (mode == 6)) {
+		INFO("Started Suspend Sequence in ATF\n");
+		/* Isolate the I/Os to allow I/O Daisy chain wakeup */
+		k3_lpm_set_io_isolation(true);
+		k3_lpm_config_magic_words(mode);
+		ti_sci_prepare_sleep(mode, context_save_addr, 0);
+		INFO("sent prepare message\n");
+		k3_config_wake_sources(true);
+		ti_sci_enter_sleep(proc_id, mode, am62l_sec_entrypoint);
+		INFO("sent enter sleep message\n");
+	}
+
+	k3_suspend_to_ram(mode);
+}
+
+static void am62l_pwr_domain_suspend_finish(const psci_power_state_t *target_state)
+{
+	/* Remove the I/O isolation */
+	k3_lpm_set_io_isolation(false);
+	/* Initialize the console to provide early debug support */
+	k3_console_setup();
+	k3_config_wake_sources(false);
+	k3_gic_restore_context();
+	k3_gic_cpuif_enable();
+	ti_init_scmi_server();
+	k3_lpm_stub_copy_to_sram();
+}
+
+static void am62l_get_sys_suspend_power_state(psci_power_state_t *req_state)
+{
+	unsigned int i;
+
+	/* CPU & cluster off, system in retention */
+	for (i = MPIDR_AFFLVL0; i <= PLAT_MAX_PWR_LVL; i++) {
+		req_state->pwr_domain_state[i] = PLAT_MAX_OFF_STATE;
+	}
+}
+
 static plat_psci_ops_t am62l_plat_psci_ops = {
 	.pwr_domain_on = am62l_pwr_domain_on,
 	.pwr_domain_off = am62l_pwr_domain_off,
 	.pwr_domain_pwr_down = am62l_pwr_down_domain,
 	.pwr_domain_on_finish = am62l_pwr_domain_on_finish,
+	.pwr_domain_suspend = am62l_pwr_domain_suspend,
+	.pwr_domain_suspend_finish = am62l_pwr_domain_suspend_finish,
+	.get_sys_suspend_power_state = am62l_get_sys_suspend_power_state,
 	.system_reset = am62l_system_reset,
 };
 
