@@ -32,10 +32,16 @@
 #define CANUART_WAKE_OFF_MODE				(0x1310U)
 #define CANUART_WAKE_OFF_MODE_STAT1			(0x130CU)
 #define CANUART_WAKE_OFF_MODE_STAT1_ENABLED		(0x1U)
+#define GP_CORE_CTL					0
 #define PD_DDR						2U
 #define LPSC_MAIN_DDR_LOCAL				21U
 #define LPSC_MAIN_DDR_CFG_ISO_N				22U
 #define LPSC_MAIN_DDR_DATA_ISO_N			23U
+#define LPSC_MAIN_GP_USB0				7
+#define LPSC_MAIN_GP_USB0_ISO_N				8
+#define LPSC_MAIN_GP_USB1				9
+#define LPSC_MAIN_GP_USB1_ISO_N				10
+
 #define TI_MAILBOX_MSG		UL(0x40)
 
 #define PLLOFFSET(idx)					(0x1000 * (idx))
@@ -79,6 +85,8 @@ __wkupsramdata struct pll_raw_data *main_plls_save_rstr[3] = {
 &main_pll0, &main_pll8, &main_pll17};
 
 __wkupsramdata int num_main_plls_save_rstr = 3;
+__wkupsramdata uint8_t usb0_state;
+__wkupsramdata uint8_t usb1_state;
 
 extern uint32_t k3_lpm_switch_stack(uintptr_t jump, uintptr_t stack, uint32_t arg);
 extern void plat_invalidate_icache(void);
@@ -136,6 +144,73 @@ __wkupsramfunc void disable_main_pll(void)
 	for (i = 0; i < num_main_plls_save_rstr; i++) {
 		pll_disable(main_plls_save_rstr[i]);
 	}
+}
+/**
+ * @brief Save and disable USB LPSC
+ *
+ */
+__wkupsramfunc static int32_t save_and_disable_usb_lpsc(void)
+{
+	int32_t ret = 0;
+
+	usb0_state = psc_raw_lpsc_get_state(K3_MAIN_PSC_BASE, LPSC_MAIN_GP_USB0);
+	psc_raw_lpsc_set_state(K3_MAIN_PSC_BASE, LPSC_MAIN_GP_USB0, MDCTL_STATE_DISABLE, 0);
+	psc_raw_pd_initiate(K3_MAIN_PSC_BASE, GP_CORE_CTL);
+	ret = psc_raw_pd_wait(K3_MAIN_PSC_BASE, GP_CORE_CTL);
+
+	if (ret == 0) {
+		psc_raw_lpsc_set_state(K3_MAIN_PSC_BASE, LPSC_MAIN_GP_USB0_ISO_N, MDCTL_STATE_DISABLE, 0);
+		psc_raw_pd_initiate(K3_MAIN_PSC_BASE, GP_CORE_CTL);
+		ret = psc_raw_pd_wait(K3_MAIN_PSC_BASE, GP_CORE_CTL);
+	}
+
+	if (ret == 0) {
+		usb1_state = psc_raw_lpsc_get_state(K3_MAIN_PSC_BASE, LPSC_MAIN_GP_USB1);
+		psc_raw_lpsc_set_state(K3_MAIN_PSC_BASE, LPSC_MAIN_GP_USB1, MDCTL_STATE_DISABLE, 0);
+		psc_raw_pd_initiate(K3_MAIN_PSC_BASE, GP_CORE_CTL);
+		ret = psc_raw_pd_wait(K3_MAIN_PSC_BASE, GP_CORE_CTL);
+	}
+
+	if (ret == 0) {
+		psc_raw_lpsc_set_state(K3_MAIN_PSC_BASE, LPSC_MAIN_GP_USB1_ISO_N, MDCTL_STATE_DISABLE, 0);
+		psc_raw_pd_initiate(K3_MAIN_PSC_BASE, GP_CORE_CTL);
+		ret = psc_raw_pd_wait(K3_MAIN_PSC_BASE, GP_CORE_CTL);
+	}
+
+	return ret;
+}
+
+/**
+ * @brief Save and disable USB LPSC
+ *
+ */
+__wkupsramfunc static int32_t restore_usb_lpsc(void)
+{
+	int32_t ret;
+
+	psc_raw_lpsc_set_state(K3_MAIN_PSC_BASE, LPSC_MAIN_GP_USB0, usb0_state, 0);
+	psc_raw_pd_initiate(K3_MAIN_PSC_BASE, GP_CORE_CTL);
+	ret = psc_raw_pd_wait(K3_MAIN_PSC_BASE, GP_CORE_CTL);
+
+	if (ret == 0) {
+		psc_raw_lpsc_set_state(K3_MAIN_PSC_BASE, LPSC_MAIN_GP_USB0_ISO_N, usb0_state, 0);
+		psc_raw_pd_initiate(K3_MAIN_PSC_BASE, GP_CORE_CTL);
+		ret = psc_raw_pd_wait(K3_MAIN_PSC_BASE, GP_CORE_CTL);
+	}
+
+	if (ret == 0) {
+		psc_raw_lpsc_set_state(K3_MAIN_PSC_BASE, LPSC_MAIN_GP_USB1, usb1_state, 0);
+		psc_raw_pd_initiate(K3_MAIN_PSC_BASE, GP_CORE_CTL);
+		ret = psc_raw_pd_wait(K3_MAIN_PSC_BASE, GP_CORE_CTL);
+	}
+
+	if (ret == 0) {
+		psc_raw_lpsc_set_state(K3_MAIN_PSC_BASE, LPSC_MAIN_GP_USB1_ISO_N, usb1_state, 0);
+		psc_raw_pd_initiate(K3_MAIN_PSC_BASE, GP_CORE_CTL);
+		ret = psc_raw_pd_wait(K3_MAIN_PSC_BASE, GP_CORE_CTL);
+	}
+
+	return ret;
 }
 
 /**
@@ -328,6 +403,12 @@ __wkupsramsuspendentry void k3_lpm_stub_entry(uint32_t mode)
 		} else {
 			lpm_seq_trace(0x1);
 		}
+		if (save_and_disable_usb_lpsc() != 0) {
+			lpm_seq_trace_fail(0x8);
+			lpm_abort();
+		} else {
+			lpm_seq_trace(0x8);
+		}
 
 		save_main_pll();
 		lpm_seq_trace(0x5);
@@ -480,6 +561,13 @@ __wkupsramfunc void k3_lpm_resume_c(void)
 		lpm_abort();
 	} else {
 		lpm_seq_trace(0xD);
+	}
+
+	if (restore_usb_lpsc() != 0) { 
+		lpm_seq_trace_fail(0xE);
+		lpm_abort();
+	} else {
+		lpm_seq_trace(0xE);
 	}
 
 	mailbox_send_message();
