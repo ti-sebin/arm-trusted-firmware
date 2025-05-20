@@ -237,11 +237,12 @@ static void am62l_cpu_standby(plat_local_state_t cpu_state)
 	cores_in_idle[core] = IN_STDBY;
 
 	if (cores_in_idle[0] && cores_in_idle[1]) {
+		/* Bypas the A53 PLL */
+		mmio_write_32(K3_MAIN_PLL_MMR_BASE + 0x8000 + 0x20, 0x80018011);
+		/* Bypas the main cbass clock */
+		mmio_write_32(K3_MAIN_PLL_MMR_BASE + 0x0000 + 0x80, 0x8027);
 		/* Both cores are in standby state */
 		// NOTICE("Both cores are in standby state\n");
-		// set_main_psc_state(PD_MPU_CLST_CORE_0, LPSC_MAIN_MPU_CLST_CORE_0, PSC_PD_OFF, PSC_SYNCRESETDISABLE);
-		// set_main_psc_state(PD_MPU_CLST_CORE_1, LPSC_MAIN_MPU_CLST_CORE_1, PSC_PD_OFF, PSC_SYNCRESETDISABLE);
-		// set_main_psc_state(PD_MPU_CLST, LPSC_MAIN_MPU_CLST, PSC_PD_OFF, PSC_SYNCRESETDISABLE);
 	}
 	scr = read_scr_el3();
 	/* Enable the Non secure interrupt to wake the CPU */
@@ -253,6 +254,10 @@ static void am62l_cpu_standby(plat_local_state_t cpu_state)
 	wfi();
 	/* Restore SCR */
 	write_scr_el3(scr);
+	/* un-bypas the A53 PLL */
+	mmio_write_32(K3_MAIN_PLL_MMR_BASE + 0x8000 + 0x20, 0x00018011);
+	/* un-bypas the main cbass clock */
+	mmio_write_32(K3_MAIN_PLL_MMR_BASE + 0x0000 + 0x80, 0x8003);
 
 	cores_in_idle[core] = IN_ACTIVE;
 }

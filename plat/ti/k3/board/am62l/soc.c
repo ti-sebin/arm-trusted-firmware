@@ -69,6 +69,7 @@ int ti_soc_init(void)
 	     version.firmware_description);
 
 	ti_force_adc_parent();
-
+	/* Enbale all auto clock gating in cbass */
+	mmio_write_32(0x43054050, 0x00000000);
 	return 0;
 }
