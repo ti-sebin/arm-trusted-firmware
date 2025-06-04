@@ -1,17 +1,10 @@
 #
-# Copyright (c) 2024-2025, Texas Instruments Inc. All rights reserved.
+# Copyright (c) 2026, Texas Instruments Inc. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 #
 
-# We dont have system level coherency capability
-USE_COHERENT_MEM	:=	0
+DTB_FILE_NAME ?= k3-am62l-evm.dtb
 
-BL32_BASE ?= 0x80200000
-$(eval $(call add_define,BL32_BASE))
-
-PRELOADED_BL33_BASE ?= 0x82000000
-$(eval $(call add_define,PRELOADED_BL33_BASE))
-
-K3_HW_CONFIG_BASE ?= 0x88000000
-$(eval $(call add_define,K3_HW_CONFIG_BASE))
+BL1_SOURCES             +=      \
+                                ${PLAT_PATH}/board/${TARGET_BOARD}/board_config.c   \
