@@ -13,6 +13,7 @@
 #include <drivers/delay_timer.h>
 #include <gtc.h>
 #include <k3_console.h>
+#include <ti_device.h>
 #include <ti_devices.h>
 #include <ti_device_handler.h>
 #include <k3_gicv3.h>
@@ -204,6 +205,7 @@ static int am62l_pwr_domain_on(u_register_t mpidr)
 
 	set_main_psc_state(PD_MPU_CLST_CORE_0 + core, LPSC_MAIN_MPU_CLST_CORE_0 + core,
 			   PSC_PD_ON, PSC_ENABLE);
+	ti_device_id_power_up_ref(AM62LX_DEV_COMPUTE_CLUSTER0_A53_0 + core);
 
 	return PSCI_E_SUCCESS;
 }
@@ -226,6 +228,12 @@ static void am62l_pwr_down_domain(const psci_power_state_t *target_state)
 	/* If our cluster is not going down we stop here */
 	if (CLUSTER_PWR_STATE(target_state) != PLAT_MAX_OFF_STATE) {
 		VERBOSE("%s: A53 CORE: %d OFF\n", __func__, core);
+		/*
+		 * Now queue up the core shutdown request.
+		 * Also drop the power up reference that was increased as part
+		 * of scmi_handler_device_state_set_on earlier
+		 */
+		ti_device_id_drop_power_up_ref(AM62LX_DEV_COMPUTE_CLUSTER0);
 		set_main_psc_state(PD_MPU_CLST_CORE_0 + core, LPSC_MAIN_MPU_CLST_CORE_0 + core,
 				   PSC_PD_OFF, PSC_SYNCRESETDISABLE);
 	}
