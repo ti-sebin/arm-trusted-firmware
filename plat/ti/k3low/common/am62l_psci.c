@@ -8,6 +8,7 @@
 #include <stdbool.h>
 
 #include <arch_helpers.h>
+#include <ti_clk.h>
 #include <common/debug.h>
 #include <drivers/delay_timer.h>
 #include <gtc.h>
@@ -263,6 +264,7 @@ static void am62l_pwr_domain_suspend(const psci_power_state_t *target_state)
 	/* Prevent interrupts from spuriously waking up this cpu */
 	k3_gic_cpuif_disable();
 	k3_gic_save_context();
+	ti_clks_suspend();
 
 	if ((mode == 0) || (mode == 6)) {
 		INFO("Started Suspend Sequence in ATF\n");
@@ -290,6 +292,7 @@ static void am62l_pwr_domain_suspend_finish(const psci_power_state_t *target_sta
 	k3_gic_cpuif_enable();
 	ti_init_scmi_server();
 	k3_lpm_stub_copy_to_sram();
+	ti_clks_resume();
 }
 
 static void am62l_get_sys_suspend_power_state(psci_power_state_t *req_state)
