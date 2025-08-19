@@ -233,4 +233,26 @@ uint32_t ti_clk_get_div(struct ti_clk *clkp);
  */
 int32_t ti_clk_div_init(struct ti_clk *clkp);
 
+/**
+ * \brief Save a divider clock value
+ *
+ * Save the current devider value during suspend
+ *
+ * \param clkp The divider clock to initialize
+ *
+ * \return 0 on success, error code otherwise
+ */
+int32_t ti_clk_div_suspend_save(struct ti_clk *clkp);
+
+/**
+ * \brief Restore a divider clock value
+ *
+ * Rsstores a clock's devider value during resume
+ *
+ * \param clkp The divider clock to initialize
+ *
+ * \return 0 on success, error code otherwise
+ */
+int32_t ti_clk_div_resume_restore(struct ti_clk *clkp);
+
 #endif

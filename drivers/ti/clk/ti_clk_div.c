@@ -575,12 +575,28 @@ bool ti_clk_div_reg_go_set_div(struct ti_clk *clkp, uint32_t div)
 	return ret;
 }
 
+int32_t ti_clk_div_suspend_save(struct ti_clk *clkp)
+{
+	clkp->saved_val = ti_clk_div_reg_go_get_div(clkp);
+
+	return 0;
+}
+
+int32_t ti_clk_div_resume_restore(struct ti_clk *clkp)
+{
+	ti_clk_div_reg_go_set_div(clkp, clkp->saved_val);
+
+	return 0;
+}
+
 const struct ti_clk_drv_div ti_clk_drv_div_reg_go = {
 	.drv = {
 		.notify_freq = ti_clk_div_notify_freq,
 		.set_freq = ti_clk_div_set_freq,
 		.get_freq = ti_clk_div_get_freq,
 		.init = ti_clk_div_init,
+		.suspend_save	= ti_clk_div_suspend_save,
+		.resume_restore = ti_clk_div_resume_restore,
 	},
 	.set_div = ti_clk_div_reg_go_set_div,
 	.get_div = ti_clk_div_reg_go_get_div,
