@@ -55,15 +55,9 @@
 #define LPDDR4_CPS_NS_DELAY_TIME 10000000U
 #endif
 
-void lpddr4_setsettings(lpddr4_ctlregs *ctlregbase, const bool errorfound);
 volatile uint32_t *lpddr4_addoffset(volatile uint32_t *addr, uint32_t regoffset);
 uint32_t lpddr4_pollctlirq(const lpddr4_privatedata *pd, lpddr4_intr_ctlinterrupt irqbit, uint32_t delay);
-bool lpddr4_checklvlerrors(const lpddr4_privatedata *pd, lpddr4_debuginfo *debuginfo, bool errfound);
-void lpddr4_seterrors(lpddr4_ctlregs *ctlregbase, lpddr4_debuginfo *debuginfo, uint8_t *errfoundptr);
 
 uint32_t lpddr4_enablepiinitiator(const lpddr4_privatedata *pd);
-void lpddr4_checkwrlvlerror(lpddr4_ctlregs *ctlregbase, lpddr4_debuginfo *debuginfo, bool *errfoundptr);
-uint32_t lpddr4_checkmmrreaderror(const lpddr4_privatedata *pd, uint64_t *mmrvalue, uint8_t *mrrstatus);
-uint32_t lpddr4_getdslicemask(uint32_t dslicenum, uint32_t arrayoffset);
 
 #endif  /* LPDDR4_H */
