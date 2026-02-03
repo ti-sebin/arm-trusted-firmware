@@ -9,8 +9,6 @@
 #ifndef LPDDR4_16BIT_H
 #define LPDDR4_16BIT_H
 
-#include "lpddr4_16bit_ctl_regs_rw_masks.h"
-
 #define DSLICE_NUM (2U)
 #define ASLICE_NUM (3U)
 
