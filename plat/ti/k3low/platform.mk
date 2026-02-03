@@ -58,7 +58,6 @@ K3_LPDDR4_SOURCES	+= 	\
 				${PLAT_PATH}/common/drivers/k3-ddrss/am62l-ddrss.c \
 				${PLAT_PATH}/common/drivers/k3-ddrss/lpddr4_obj_if.c \
 				${PLAT_PATH}/common/drivers/k3-ddrss/lpddr4.c \
-				${PLAT_PATH}/common/drivers/k3-ddrss/lpddr4_16bit_ctl_regs_rw_masks.c \
 				${PLAT_PATH}/common/drivers/k3-ddrss/lpddr4_16bit.c \
 				${PLAT_PATH}/common/am62l-ddr-dtb.S \
 
