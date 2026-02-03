@@ -9,16 +9,6 @@
 #ifndef LPDDR4_16BIT_H
 #define LPDDR4_16BIT_H
 
-#define DSLICE_NUM (2U)
-#define ASLICE_NUM (3U)
-
-#define DSLICE0_REG_COUNT  (126U)
-#define DSLICE1_REG_COUNT  (126U)
-#define ASLICE0_REG_COUNT  (42U)
-#define ASLICE1_REG_COUNT  (42U)
-#define ASLICE2_REG_COUNT  (42U)
-#define PHY_CORE_REG_COUNT (126U)
-
 #define GRP_SHIFT 1
 #define INT_SHIFT 2
 

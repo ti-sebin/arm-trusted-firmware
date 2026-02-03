@@ -31,11 +31,4 @@
 		(reg_value | CPS_FLD_MASK(fld)); \
 	})
 
-#ifdef CLR_USED
-#define CPS_FLD_CLEAR(reg, fld, reg_value) \
-	({ \
-		reg_value & ~(CPS_FLD_MASK(fld)); \
-	})
-#endif
-
 #endif /* CPS_DRV_H_ */
