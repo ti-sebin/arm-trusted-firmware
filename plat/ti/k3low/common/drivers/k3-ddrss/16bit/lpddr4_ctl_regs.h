@@ -9,10 +9,7 @@
 #ifndef REG_LPDDR4_CTL_REGS_H_
 #define REG_LPDDR4_CTL_REGS_H_
 
-#include "lpddr4_data_slice_0_macros.h"
-#include "lpddr4_data_slice_1_macros.h"
-#include "lpddr4_ddr_controller_macros.h"
-#include "lpddr4_pi_macros.h"
+#include "lpddr4_macros.h"
 
 typedef struct __attribute__((packed)) lpddr4_ctlregs_s {
 	volatile uint32_t DENALI_CTL_0;
