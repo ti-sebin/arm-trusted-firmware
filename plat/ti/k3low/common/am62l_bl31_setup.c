@@ -6,6 +6,7 @@
  */
 
 #include <common/debug.h>
+#include <lpm_stub.h>
 #include <plat_private.h>
 #include <plat_scmi_def.h>
 #include <ti_sci.h>
@@ -26,6 +27,7 @@ const mmap_region_t plat_k3_mmap[] = {
 	K3_MAP_REGION_FLAT(WKUP_CTRL_MMR0_BASE, WKUP_CTRL_MMR0_SIZE, MT_DEVICE | MT_RW | MT_SECURE),
 	K3_MAP_REGION_FLAT(K3LOW_DEVCTRL_BASE,  K3LOW_DEVCTRL_SIZE,  MT_DEVICE | MT_RW | MT_SECURE),
 	K3_MAP_REGION_FLAT(MAILBOX_SHMEM_REGION_BASE, MAILBOX_SHMEM_REGION_SIZE, MT_DEVICE | MT_RW | MT_SECURE),
+	K3_MAP_REGION_FLAT(DEVICE_WKUP_SRAM_BASE, DEVICE_WKUP_SRAM_SIZE, MT_MEMORY | MT_RW | MT_SECURE),
 	{ /* sentinel */ }
 };
 
@@ -70,6 +72,12 @@ int ti_soc_init(void)
 	}
 
         ti_clk_handler_init();
+
+	if (k3_lpm_stub_copy_to_sram()) {
+		ERROR("A53 stub copy failed!\n");
+	} else {
+		INFO("A53 stub copy passed\n");
+	}
 
 	return 0;
 }
