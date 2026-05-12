@@ -214,6 +214,7 @@ static void scmi_clock_attributes(struct scmi_msg *msg)
 							     clock_id);
 
 	return_values.attributes |= BIT(SCMI_CLOCK_EXTENDED_CONFIG_SUPPORT_POS);
+	return_values.attributes |= BIT(SCMI_CLOCK_EXTENDED_CONFIG_SUPPORT_PERMISSION);
 	return_values.attributes |= BIT(SCMI_CLOCK_PARENT_IDENTIFIER_SUPPORT_POS);
 
 	return_values.clock_enable_delay = plat_scmi_clock_get_enable_delay(msg->agent_id,
@@ -468,6 +469,32 @@ static void scmi_clock_config_get(struct scmi_msg *msg)
 	scmi_write_response(msg, &p2a, sizeof(p2a));
 }
 
+static void scmi_clock_get_permissions(struct scmi_msg *msg)
+{
+	const struct scmi_clock_permissions_get_a2p *in_args = (void *)msg->in;
+	struct scmi_clock_permissions_get_p2a p2a = {
+		.status = SCMI_SUCCESS,
+	};
+	// unsigned int extended_config_type = 0U;
+	unsigned int clock_id = 0U;
+
+	if (msg->in_size != sizeof(*in_args)) {
+		scmi_status_response(msg, SCMI_PROTOCOL_ERROR);
+		return;
+	}
+
+	clock_id = SPECULATION_SAFE_VALUE(in_args->clock_id);
+
+	if (clock_id >= plat_scmi_clock_count(msg->agent_id)) {
+		scmi_status_response(msg, SCMI_NOT_FOUND);
+		return;
+	}
+
+	p2a.permissions = 0x60000000;
+
+	scmi_write_response(msg, &p2a, sizeof(p2a));
+}
+
 static void scmi_clock_config_set(struct scmi_msg *msg)
 {
 	const struct scmi_clock_config_set_a2p *in_args = (void *)msg->in;
@@ -635,6 +662,7 @@ static const scmi_msg_handler_t scmi_clock_handler_table[] = {
 	[SCMI_CLOCK_RATE_GET] = scmi_clock_rate_get,
 	[SCMI_CLOCK_CONFIG_SET] = scmi_clock_config_set,
 	[SCMI_CLOCK_CONFIG_GET] = scmi_clock_config_get,
+	[CLOCK_GET_PERMISSIONS] = scmi_clock_get_permissions,
 	[SCMI_CLOCK_POSSIBLE_PARENTS_GET] = scmi_clock_possible_parents_get,
 	[SCMI_CLOCK_PARENT_SET] = scmi_clock_parent_set,
 	[SCMI_CLOCK_PARENT_GET] = scmi_clock_parent_get,

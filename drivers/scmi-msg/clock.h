@@ -26,6 +26,7 @@ enum scmi_clock_command_id {
 	SCMI_CLOCK_POSSIBLE_PARENTS_GET = 0xC,
 	SCMI_CLOCK_PARENT_SET = 0xD,
 	SCMI_CLOCK_PARENT_GET = 0xE,
+	CLOCK_GET_PERMISSIONS = 0xF,
 };
 
 /* Protocol attributes */
@@ -123,6 +124,7 @@ struct scmi_clock_config_set_p2a {
  */
 
 #define SCMI_CLOCK_EXTENDED_CONFIG_SUPPORT_POS		27
+#define SCMI_CLOCK_EXTENDED_CONFIG_SUPPORT_PERMISSION		1
 #define SCMI_CLOCK_EXTENDED_CONFIG_GET_TYPE_MASK	GENMASK_32(7, 0)
 
 struct scmi_clock_config_get_a2p {
@@ -135,6 +137,16 @@ struct scmi_clock_config_get_p2a {
 	uint32_t attributes;
 	uint32_t config;
 	uint32_t extended_config_val;
+};
+
+
+struct scmi_clock_permissions_get_a2p {
+	uint32_t clock_id;
+};
+
+struct scmi_clock_permissions_get_p2a {
+	int32_t status;
+	uint32_t permissions;
 };
 
 /*

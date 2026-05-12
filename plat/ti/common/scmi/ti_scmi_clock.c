@@ -122,7 +122,7 @@ int32_t plat_scmi_clock_set_state(unsigned int agent_id __unused,
 		return SCMI_NOT_SUPPORTED;
 	}
 
-	VERBOSE("%s: agent_id = %u, scmi_id = %u, enable: %d\n",
+	ERROR("%s: agent_id = %u, scmi_id = %u, enable: %d\n",
 		__func__, agent_id, scmi_id, (int)enable);
 
 	if (enable) {
